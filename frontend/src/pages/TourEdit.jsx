@@ -62,55 +62,58 @@ const TourEdit = () => {
     fetchTour();
   }, [id, navigate]);
 
-  // PREDEFINED SPECIAL LOCATIONS FOR INSTANT, RELIABLE AUTOCOMPLETE
-  const SPECIAL_LOCATIONS = [
-    { display_name: "Paris, France", lat: 48.8566, lon: 2.3522 },
-    { display_name: "Tokyo, Japan", lat: 35.6762, lon: 139.6503 },
-    { display_name: "Delhi, India", lat: 28.6139, lon: 77.2090 },
-    { display_name: "New York, USA", lat: 40.7128, lon: -74.0060 },
-    { display_name: "London, UK", lat: 51.5074, lon: -0.1278 },
-    { display_name: "Dubai, UAE", lat: 25.2048, lon: 55.2708 },
-    { display_name: "Rome, Italy", lat: 41.9028, lon: 12.4964 },
-    { display_name: "Bali, Indonesia", lat: -8.4095, lon: 115.1889 },
-    { display_name: "Mumbai, India", lat: 19.0760, lon: 72.8777 },
-    { display_name: "Singapore", lat: 1.3521, lon: 103.8198 },
-    { display_name: "Bangkok, Thailand", lat: 13.7563, lon: 100.5018 },
-    { display_name: "Sydney, Australia", lat: -33.8688, lon: 151.2093 },
-    { display_name: "Istanbul, Turkey", lat: 41.0082, lon: 28.9784 },
-    { display_name: "Cairo, Egypt", lat: 30.0444, lon: 31.2357 },
-    { display_name: "Barcelona, Spain", lat: 41.3851, lon: 2.1734 },
-    { display_name: "Maldives", lat: 3.2028, lon: 73.2207 },
-    { display_name: "Switzerland", lat: 46.8182, lon: 8.2275 },
-    { display_name: "Goa, India", lat: 15.2993, lon: 74.1240 },
-    { display_name: "Jaipur, India", lat: 26.9124, lon: 75.7873 },
-    { display_name: "Kolkata, India", lat: 22.5726, lon: 88.3639 },
-    { display_name: "Manali, India", lat: 32.2396, lon: 77.1887 },
-    { display_name: "Varanasi, India", lat: 25.3176, lon: 82.9739 },
-    { display_name: "Kerala, India", lat: 10.8505, lon: 76.2711 },
-  ];
-
-  // Local Filter for Main Destination
+  // Fetch global locations reliably via Open-Meteo API
   useEffect(() => {
-    if (destination.trim().length > 0) {
-      const filtered = SPECIAL_LOCATIONS.filter(loc => 
-        loc.display_name.toLowerCase().includes(destination.toLowerCase())
-      );
-      setSuggestions(filtered);
-    } else {
-      setSuggestions(SPECIAL_LOCATIONS);
-    }
+    const fetchSuggestions = async () => {
+      if (destination.trim().length > 2) {
+        try {
+          const { data } = await axios.get(`https://geocoding-api.open-meteo.com/v1/search?name=${destination}&count=5`);
+          if (data.results) {
+            const formatted = data.results.map(loc => ({
+              display_name: `${loc.name}, ${loc.admin1 ? loc.admin1 + ', ' : ''}${loc.country || ''}`.replace(/,\s*$/, ''),
+              lat: loc.latitude,
+              lon: loc.longitude
+            }));
+            setSuggestions(formatted);
+          } else {
+            setSuggestions([]);
+          }
+        } catch (err) {
+          console.error('Error fetching location suggestions:', err);
+        }
+      } else {
+        setSuggestions([]);
+      }
+    };
+    const debounceTimer = setTimeout(fetchSuggestions, 400);
+    return () => clearTimeout(debounceTimer);
   }, [destination]);
   
-  // Local Filter for Stop suggestions (Itinerary)
+  // Fetch Stop suggestions (Itinerary)
   useEffect(() => {
-    if (stopSearch.trim().length > 0) {
-      const filtered = SPECIAL_LOCATIONS.filter(loc => 
-        loc.display_name.toLowerCase().includes(stopSearch.toLowerCase())
-      );
-      setStopSuggestions(filtered);
-    } else {
-      setStopSuggestions(SPECIAL_LOCATIONS);
-    }
+    const fetchStopSuggestions = async () => {
+      if (stopSearch.trim().length > 2) {
+        try {
+          const { data } = await axios.get(`https://geocoding-api.open-meteo.com/v1/search?name=${stopSearch}&count=5`);
+          if (data.results) {
+            const formatted = data.results.map(loc => ({
+              display_name: `${loc.name}, ${loc.admin1 ? loc.admin1 + ', ' : ''}${loc.country || ''}`.replace(/,\s*$/, ''),
+              lat: loc.latitude,
+              lon: loc.longitude
+            }));
+            setStopSuggestions(formatted);
+          } else {
+            setStopSuggestions([]);
+          }
+        } catch (err) {
+          console.error('Error fetching stop suggestions:', err);
+        }
+      } else {
+        setStopSuggestions([]);
+      }
+    };
+    const debounceTimer = setTimeout(fetchStopSuggestions, 400);
+    return () => clearTimeout(debounceTimer);
   }, [stopSearch]);
 
   const handleSuggestionClick = async (suggestion) => {
