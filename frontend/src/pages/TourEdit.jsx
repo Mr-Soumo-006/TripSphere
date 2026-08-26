@@ -65,9 +65,9 @@ const TourEdit = () => {
   // Fetch global locations reliably via Open-Meteo API
   useEffect(() => {
     const fetchSuggestions = async () => {
-      if (destination.trim().length > 2) {
+      if (destination.trim().length >= 2) {
         try {
-          const { data } = await axios.get(`https://geocoding-api.open-meteo.com/v1/search?name=${destination}&count=5`);
+          const { data } = await axios.get(`https://geocoding-api.open-meteo.com/v1/search?name=${destination}&count=10`);
           if (data.results) {
             const formatted = data.results.map(loc => ({
               display_name: `${loc.name}, ${loc.admin1 ? loc.admin1 + ', ' : ''}${loc.country || ''}`.replace(/,\s*$/, ''),
@@ -75,26 +75,30 @@ const TourEdit = () => {
               lon: loc.longitude
             }));
             setSuggestions(formatted);
+            setShowSuggestions(true);
           } else {
-            setSuggestions([]);
+            setSuggestions([{ display_name: destination, lat: 0, lon: 0 }]);
+            setShowSuggestions(true);
           }
         } catch (err) {
           console.error('Error fetching location suggestions:', err);
+          setSuggestions([{ display_name: destination, lat: 0, lon: 0 }]);
+          setShowSuggestions(true);
         }
       } else {
         setSuggestions([]);
       }
     };
-    const debounceTimer = setTimeout(fetchSuggestions, 400);
+    const debounceTimer = setTimeout(fetchSuggestions, 300);
     return () => clearTimeout(debounceTimer);
   }, [destination]);
   
   // Fetch Stop suggestions (Itinerary)
   useEffect(() => {
     const fetchStopSuggestions = async () => {
-      if (stopSearch.trim().length > 2) {
+      if (stopSearch.trim().length >= 2) {
         try {
-          const { data } = await axios.get(`https://geocoding-api.open-meteo.com/v1/search?name=${stopSearch}&count=5`);
+          const { data } = await axios.get(`https://geocoding-api.open-meteo.com/v1/search?name=${stopSearch}&count=10`);
           if (data.results) {
             const formatted = data.results.map(loc => ({
               display_name: `${loc.name}, ${loc.admin1 ? loc.admin1 + ', ' : ''}${loc.country || ''}`.replace(/,\s*$/, ''),
@@ -102,17 +106,21 @@ const TourEdit = () => {
               lon: loc.longitude
             }));
             setStopSuggestions(formatted);
+            setShowStopSuggestions(true);
           } else {
-            setStopSuggestions([]);
+            setStopSuggestions([{ display_name: stopSearch, lat: 0, lon: 0 }]);
+            setShowStopSuggestions(true);
           }
         } catch (err) {
           console.error('Error fetching stop suggestions:', err);
+          setStopSuggestions([{ display_name: stopSearch, lat: 0, lon: 0 }]);
+          setShowStopSuggestions(true);
         }
       } else {
         setStopSuggestions([]);
       }
     };
-    const debounceTimer = setTimeout(fetchStopSuggestions, 400);
+    const debounceTimer = setTimeout(fetchStopSuggestions, 300);
     return () => clearTimeout(debounceTimer);
   }, [stopSearch]);
 
@@ -159,12 +167,12 @@ const TourEdit = () => {
         if (matchedImage) {
           setImage(matchedImage);
         } else {
-          // Fallback: generic travel image
-          setImage('http://localhost:5000/uploads/default.jpg');
+          // Dynamic fallback for ANY city using LoremFlickr
+          setImage(`https://loremflickr.com/1000/600/${encodeURIComponent(primaryName)},travel,landscape/all`);
         }
       } catch (err) {
         console.error('Error setting image', err);
-        setImage('http://localhost:5000/uploads/default.jpg');
+        setImage(`https://loremflickr.com/1000/600/${encodeURIComponent(primaryName)},travel,landscape/all`);
       }
   };
 
@@ -259,7 +267,9 @@ const TourEdit = () => {
               />
               
               {showSuggestions && suggestions.length > 0 && (
-                <ul style={{
+                <ul 
+                  onMouseDown={(e) => e.preventDefault()}
+                  style={{
                   position: 'absolute',
                   top: '100%',
                   left: 0,
@@ -361,8 +371,10 @@ const TourEdit = () => {
                 />
                 
                 {showStopSuggestions && stopSuggestions.length > 0 && (
-                  <ul style={{
-                    position: 'absolute',
+                  <ul 
+                    onMouseDown={(e) => e.preventDefault()}
+                    style={{
+                      position: 'absolute',
                     top: '100%',
                     left: 0,
                     right: 0,
