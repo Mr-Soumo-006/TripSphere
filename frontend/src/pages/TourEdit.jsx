@@ -62,44 +62,55 @@ const TourEdit = () => {
     fetchTour();
   }, [id, navigate]);
 
-  // Fetch location suggestions (Main Destination)
+  // PREDEFINED SPECIAL LOCATIONS FOR INSTANT, RELIABLE AUTOCOMPLETE
+  const SPECIAL_LOCATIONS = [
+    { display_name: "Paris, France", lat: 48.8566, lon: 2.3522 },
+    { display_name: "Tokyo, Japan", lat: 35.6762, lon: 139.6503 },
+    { display_name: "Delhi, India", lat: 28.6139, lon: 77.2090 },
+    { display_name: "New York, USA", lat: 40.7128, lon: -74.0060 },
+    { display_name: "London, UK", lat: 51.5074, lon: -0.1278 },
+    { display_name: "Dubai, UAE", lat: 25.2048, lon: 55.2708 },
+    { display_name: "Rome, Italy", lat: 41.9028, lon: 12.4964 },
+    { display_name: "Bali, Indonesia", lat: -8.4095, lon: 115.1889 },
+    { display_name: "Mumbai, India", lat: 19.0760, lon: 72.8777 },
+    { display_name: "Singapore", lat: 1.3521, lon: 103.8198 },
+    { display_name: "Bangkok, Thailand", lat: 13.7563, lon: 100.5018 },
+    { display_name: "Sydney, Australia", lat: -33.8688, lon: 151.2093 },
+    { display_name: "Istanbul, Turkey", lat: 41.0082, lon: 28.9784 },
+    { display_name: "Cairo, Egypt", lat: 30.0444, lon: 31.2357 },
+    { display_name: "Barcelona, Spain", lat: 41.3851, lon: 2.1734 },
+    { display_name: "Maldives", lat: 3.2028, lon: 73.2207 },
+    { display_name: "Switzerland", lat: 46.8182, lon: 8.2275 },
+    { display_name: "Goa, India", lat: 15.2993, lon: 74.1240 },
+    { display_name: "Jaipur, India", lat: 26.9124, lon: 75.7873 },
+    { display_name: "Kolkata, India", lat: 22.5726, lon: 88.3639 },
+    { display_name: "Manali, India", lat: 32.2396, lon: 77.1887 },
+    { display_name: "Varanasi, India", lat: 25.3176, lon: 82.9739 },
+    { display_name: "Kerala, India", lat: 10.8505, lon: 76.2711 },
+  ];
+
+  // Local Filter for Main Destination
   useEffect(() => {
-    const fetchSuggestions = async () => {
-      if (destination.trim().length > 2) {
-        try {
-          const { data } = await axios.get(`https://nominatim.openstreetmap.org/search?format=json&q=${destination}&limit=5`);
-          setSuggestions(data);
-          setShowSuggestions(true);
-        } catch (err) {
-          console.error('Error fetching location suggestions:', err);
-        }
-      } else {
-        setSuggestions([]);
-        setShowSuggestions(false);
-      }
-    };
-    const debounceTimer = setTimeout(fetchSuggestions, 400);
-    return () => clearTimeout(debounceTimer);
+    if (destination.trim().length > 0) {
+      const filtered = SPECIAL_LOCATIONS.filter(loc => 
+        loc.display_name.toLowerCase().includes(destination.toLowerCase())
+      );
+      setSuggestions(filtered);
+    } else {
+      setSuggestions(SPECIAL_LOCATIONS);
+    }
   }, [destination]);
   
-  // Fetch Stop suggestions (Itinerary)
+  // Local Filter for Stop suggestions (Itinerary)
   useEffect(() => {
-    const fetchStopSuggestions = async () => {
-      if (stopSearch.trim().length > 2) {
-        try {
-          const { data } = await axios.get(`https://nominatim.openstreetmap.org/search?format=json&q=${stopSearch}&limit=5`);
-          setStopSuggestions(data);
-          setShowStopSuggestions(true);
-        } catch (err) {
-          console.error('Error fetching stop suggestions:', err);
-        }
-      } else {
-        setStopSuggestions([]);
-        setShowStopSuggestions(false);
-      }
-    };
-    const debounceTimer = setTimeout(fetchStopSuggestions, 400);
-    return () => clearTimeout(debounceTimer);
+    if (stopSearch.trim().length > 0) {
+      const filtered = SPECIAL_LOCATIONS.filter(loc => 
+        loc.display_name.toLowerCase().includes(stopSearch.toLowerCase())
+      );
+      setStopSuggestions(filtered);
+    } else {
+      setStopSuggestions(SPECIAL_LOCATIONS);
+    }
   }, [stopSearch]);
 
   const handleSuggestionClick = async (suggestion) => {
@@ -238,7 +249,7 @@ const TourEdit = () => {
                   setDestination(e.target.value);
                   setShowSuggestions(true);
                 }}
-                onFocus={() => { if (suggestions.length > 0) setShowSuggestions(true); }}
+                onFocus={() => setShowSuggestions(true)}
                 onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
                 style={{ width: '100%', padding: '0.8rem', borderRadius: '4px', border: '1px solid #3f3f46', background: '#09090b', color: '#fafafa', outline: 'none' }} 
                 required 
@@ -341,7 +352,8 @@ const TourEdit = () => {
                     setStopSearch(e.target.value);
                     setShowStopSuggestions(true);
                   }}
-                  onFocus={() => { if (stopSuggestions.length > 0) setShowStopSuggestions(true); }}
+                  onFocus={() => setShowStopSuggestions(true)}
+                  onBlur={() => setTimeout(() => setShowStopSuggestions(false), 200)}
                   style={{ width: '100%', padding: '0.8rem', borderRadius: '4px', border: '1px solid #3f3f46', background: '#18181b', color: '#fafafa', outline: 'none' }} 
                 />
                 
