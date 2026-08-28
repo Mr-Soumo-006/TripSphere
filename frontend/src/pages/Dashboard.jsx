@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate, Link } from 'react-router-dom';
 import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 const Dashboard = () => {
   const [bookings, setBookings] = useState([]);
@@ -52,64 +53,126 @@ const Dashboard = () => {
     try {
       const doc = new jsPDF();
       
-      // Header
-      doc.setFillColor(9, 9, 11);
-      doc.rect(0, 0, 210, 40, 'F');
-      
-      doc.setTextColor(212, 175, 55);
+      // Header Section
       doc.setFontSize(22);
-      doc.text('TRIPSPHERE', 105, 20, { align: 'center' });
-      doc.setFontSize(12);
-      doc.text('Official Travel Invoice & Itinerary', 105, 28, { align: 'center' });
-      
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(212, 175, 55); // Gold
+      doc.text('TRIPSPHERE', 14, 22);
+
+      // Company Address (Fake for invoice realism)
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
       doc.setTextColor(50, 50, 50);
+      doc.text('TripSphere Travels Pvt. Ltd.', 14, 30);
+      doc.text('123 Explorer Avenue, Wanderlust City, WL 45678', 14, 35);
+      doc.text('GSTIN: 22AAAAA0000A1Z5', 14, 40);
+      doc.text('Phone: +91-9876543210 | Email: support@tripsphere.com', 14, 45);
       
-      // Customer Details
+      // Invoice Info (Right side)
       doc.setFontSize(14);
-      doc.text('Customer Details', 20, 55);
-      doc.setFontSize(10);
-      doc.text(`Name: ${user.name}`, 20, 62);
-      doc.text(`Email: ${user.email}`, 20, 67);
-      doc.text(`Booking Ref: #${booking._id}`, 20, 72);
-      doc.text(`Date of Issue: ${new Date().toLocaleDateString()}`, 20, 77);
+      doc.setFont('helvetica', 'bold');
+      doc.text('TAX INVOICE', 196, 22, { align: 'right' });
       
-      // Trip Details
-      doc.setFontSize(14);
-      doc.text('Trip Details', 20, 95);
       doc.setFontSize(10);
-      doc.text(`Tour: ${booking.tour?.title || 'Tour Unlisted'}`, 20, 102);
-      doc.text(`Destination: ${booking.tour?.destination || 'N/A'}`, 20, 107);
-      doc.text(`Duration: ${booking.tour?.duration || 'N/A'} Days`, 20, 112);
+      doc.setFont('helvetica', 'normal');
+      doc.text(`Invoice Number: INV-${booking._id.substring(0, 8).toUpperCase()}`, 196, 30, { align: 'right' });
+      doc.text(`Invoice Date: ${new Date().toLocaleDateString()}`, 196, 35, { align: 'right' });
+      doc.text(`Order Date: ${new Date(booking.createdAt).toLocaleDateString()}`, 196, 40, { align: 'right' });
+
+      // Divider Line
+      doc.setDrawColor(200, 200, 200);
+      doc.line(14, 50, 196, 50);
+
+      // Billed To
+      doc.setFont('helvetica', 'bold');
+      doc.text('Billed To:', 14, 60);
+      doc.setFont('helvetica', 'normal');
+      doc.text(user.name, 14, 67);
+      doc.text(user.email, 14, 72);
+      doc.text('Payment Status: ' + booking.status.toUpperCase(), 14, 77);
+
+      // Math for Amazon-like Tax breakdown (Assuming 18% GST is included in price)
+      const totalPrice = Number(booking.price);
+      const basePrice = (totalPrice / 1.18).toFixed(2);
+      const taxAmount = (totalPrice - basePrice).toFixed(2);
       
-      let nextY = 117;
+      let travelDates = 'N/A';
       if (booking.startDate && booking.endDate) {
-        doc.text(`Travel Dates: ${new Date(booking.startDate).toLocaleDateString()} to ${new Date(booking.endDate).toLocaleDateString()}`, 20, 117);
-        nextY = 127;
-      } else {
-        nextY = 122;
+        travelDates = `${new Date(booking.startDate).toLocaleDateString()} to ${new Date(booking.endDate).toLocaleDateString()}`;
       }
       
-      // Itinerary Stops
+      const tourTitle = booking.tour?.title || 'Tour Package (Unlisted)';
+      const destination = booking.tour?.destination || 'N/A';
+      const duration = booking.tour?.duration ? `${booking.tour.duration} Days` : 'N/A';
+      
+      const itemDescription = `${tourTitle}\nDestination: ${destination}\nDuration: ${duration}\nTravel Dates: ${travelDates}`;
+
+      // Itemized Table using autotable
+      autoTable(doc, {
+        startY: 85,
+        head: [['S.No', 'Description', 'Unit Price', 'Qty', 'Net Amount', 'Tax (18%)', 'Total Amount']],
+        body: [
+          ['1', itemDescription, `Rs. ${basePrice}`, '1', `Rs. ${basePrice}`, `Rs. ${taxAmount}`, `Rs. ${totalPrice.toFixed(2)}`]
+        ],
+        theme: 'grid',
+        headStyles: { fillColor: [9, 9, 11], textColor: [255, 255, 255], fontStyle: 'bold' },
+        styles: { fontSize: 9, cellPadding: 6, valign: 'middle' },
+        columnStyles: {
+          0: { cellWidth: 15 },
+          1: { cellWidth: 70 },
+          2: { cellWidth: 20 },
+          3: { cellWidth: 12 },
+          4: { cellWidth: 22 },
+          5: { cellWidth: 20 },
+          6: { cellWidth: 23, halign: 'right' }
+        }
+      });
+
+      const finalY = doc.lastAutoTable.finalY || 130;
+      
+      // Totals Section (Bottom Right)
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Amount Before Tax:', 130, finalY + 10);
+      doc.setFont('helvetica', 'normal');
+      doc.text(`Rs. ${basePrice}`, 196, finalY + 10, { align: 'right' });
+      
+      doc.setFont('helvetica', 'bold');
+      doc.text('Tax Amount (IGST 18%):', 130, finalY + 18);
+      doc.setFont('helvetica', 'normal');
+      doc.text(`Rs. ${taxAmount}`, 196, finalY + 18, { align: 'right' });
+      
+      doc.setDrawColor(0, 0, 0);
+      doc.line(130, finalY + 22, 196, finalY + 22);
+      
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Grand Total:', 130, finalY + 30);
+      doc.text(`Rs. ${totalPrice.toFixed(2)}`, 196, finalY + 30, { align: 'right' });
+
+      // Authorized Signatory
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Authorized Signatory', 196, finalY + 55, { align: 'right' });
+      doc.setFont('helvetica', 'normal');
+      doc.text('For TripSphere Travels Pvt. Ltd.', 196, finalY + 60, { align: 'right' });
+
+      // Render Itinerary (Left side)
+      let currentY = finalY + 15;
       if (booking.tour?.itinerary && booking.tour.itinerary.length > 0) {
-        doc.setFontSize(14);
-        doc.text('Locations / Itinerary', 20, nextY);
         doc.setFontSize(10);
-        nextY += 7;
+        doc.setFont('helvetica', 'bold');
+        doc.text('Included Locations / Itinerary:', 14, currentY);
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(9);
+        currentY += 6;
         booking.tour.itinerary.forEach((stop, index) => {
-          doc.text(`Day ${index + 1}: ${stop.locationName}`, 20, nextY);
-          nextY += 6;
+          doc.text(`Day ${index + 1}: ${stop.locationName}`, 14, currentY);
+          currentY += 5;
         });
       }
-      
-      // Bill Amount
-      nextY += 10;
-      doc.setFontSize(14);
-      doc.text('Payment Summary', 20, nextY);
-      doc.setFontSize(12);
-      doc.text(`Total Paid: INR ${booking.price}`, 20, nextY + 8);
-      doc.text(`Status: ${booking.status.toUpperCase()}`, 20, nextY + 14);
 
-      // Try adding image
+      // Add Tour Image
       if (booking.tour?.image) {
         try {
           const getBase64ImageFromUrl = async (imageUrl) => {
@@ -122,13 +185,25 @@ const Dashboard = () => {
             });
           };
           const base64 = await getBase64ImageFromUrl(booking.tour.image);
-          doc.addImage(base64, 'JPEG', 120, 55, 70, 70);
+          // Place image below itinerary
+          const imageY = Math.max(currentY + 5, finalY + 10);
+          if (imageY + 45 < 270) { // Check if it fits on page
+            doc.addImage(base64, 'JPEG', 14, imageY, 60, 40);
+          }
         } catch (e) {
           console.warn('Could not load image for PDF due to CORS or network', e);
         }
       }
       
-      doc.save(`TripSphere_Bill_${booking._id}.pdf`);
+      // Footer Note
+      doc.setDrawColor(200, 200, 200);
+      doc.line(14, 280, 196, 280);
+      doc.setFontSize(8);
+      doc.setTextColor(150, 150, 150);
+      doc.text('This is a computer generated invoice and does not require a physical signature.', 105, 285, { align: 'center' });
+
+      // Save PDF
+      doc.save(`TripSphere_Tax_Invoice_${booking._id}.pdf`);
     } catch (error) {
       console.error('PDF Generation failed', error);
       alert('Failed to generate PDF');
