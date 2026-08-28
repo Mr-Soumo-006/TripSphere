@@ -31,7 +31,8 @@ const createBooking = async (req, res) => {
         
         <div style="background: #18181b; padding: 1.5rem; border-radius: 4px; border: 1px solid #27272a; margin-top: 2rem;">
           <h2 style="margin-top: 0; font-weight: 400; color: #fafafa;">${tour.title}</h2>
-          <p style="color: #a1a1aa; margin: 0 0 1rem 0;">📍 ${tour.destination}</p>
+          <p style="color: #a1a1aa; margin: 0 0 0.5rem 0;">📍 ${tour.destination}</p>
+          <p style="color: #a1a1aa; margin: 0 0 1rem 0;">📅 ${new Date(booking.startDate).toLocaleDateString()} - ${new Date(booking.endDate).toLocaleDateString()}</p>
           
           <div style="display: flex; justify-content: space-between; border-top: 1px solid #27272a; padding-top: 1rem; margin-top: 1rem;">
             <span style="color: #71717a;">Total Paid</span>
