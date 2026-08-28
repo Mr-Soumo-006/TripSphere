@@ -116,15 +116,15 @@ const Dashboard = () => {
         ],
         theme: 'grid',
         headStyles: { fillColor: [9, 9, 11], textColor: [255, 255, 255], fontStyle: 'bold' },
-        styles: { fontSize: 9, cellPadding: 6, valign: 'middle' },
+        styles: { fontSize: 9, cellPadding: 2, valign: 'middle' },
         columnStyles: {
-          0: { cellWidth: 15 },
-          1: { cellWidth: 70 },
-          2: { cellWidth: 20 },
-          3: { cellWidth: 12 },
-          4: { cellWidth: 22 },
-          5: { cellWidth: 20 },
-          6: { cellWidth: 23, halign: 'right' }
+          0: { cellWidth: 14, halign: 'center' },
+          1: { cellWidth: 61 },
+          2: { cellWidth: 22 },
+          3: { cellWidth: 10, halign: 'center' },
+          4: { cellWidth: 23 },
+          5: { cellWidth: 22 },
+          6: { cellWidth: 30, halign: 'right' }
         }
       });
 
