@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate, Link } from 'react-router-dom';
+import { jsPDF } from 'jspdf';
 
 const Dashboard = () => {
   const [bookings, setBookings] = useState([]);
@@ -46,6 +47,93 @@ const Dashboard = () => {
 
     fetchData();
   }, [user]);
+
+  const generatePDF = async (booking) => {
+    try {
+      const doc = new jsPDF();
+      
+      // Header
+      doc.setFillColor(9, 9, 11);
+      doc.rect(0, 0, 210, 40, 'F');
+      
+      doc.setTextColor(212, 175, 55);
+      doc.setFontSize(22);
+      doc.text('TRIPSPHERE', 105, 20, { align: 'center' });
+      doc.setFontSize(12);
+      doc.text('Official Travel Invoice & Itinerary', 105, 28, { align: 'center' });
+      
+      doc.setTextColor(50, 50, 50);
+      
+      // Customer Details
+      doc.setFontSize(14);
+      doc.text('Customer Details', 20, 55);
+      doc.setFontSize(10);
+      doc.text(`Name: ${user.name}`, 20, 62);
+      doc.text(`Email: ${user.email}`, 20, 67);
+      doc.text(`Booking Ref: #${booking._id}`, 20, 72);
+      doc.text(`Date of Issue: ${new Date().toLocaleDateString()}`, 20, 77);
+      
+      // Trip Details
+      doc.setFontSize(14);
+      doc.text('Trip Details', 20, 95);
+      doc.setFontSize(10);
+      doc.text(`Tour: ${booking.tour?.title || 'Tour Unlisted'}`, 20, 102);
+      doc.text(`Destination: ${booking.tour?.destination || 'N/A'}`, 20, 107);
+      doc.text(`Duration: ${booking.tour?.duration || 'N/A'} Days`, 20, 112);
+      
+      let nextY = 117;
+      if (booking.startDate && booking.endDate) {
+        doc.text(`Travel Dates: ${new Date(booking.startDate).toLocaleDateString()} to ${new Date(booking.endDate).toLocaleDateString()}`, 20, 117);
+        nextY = 127;
+      } else {
+        nextY = 122;
+      }
+      
+      // Itinerary Stops
+      if (booking.tour?.itinerary && booking.tour.itinerary.length > 0) {
+        doc.setFontSize(14);
+        doc.text('Locations / Itinerary', 20, nextY);
+        doc.setFontSize(10);
+        nextY += 7;
+        booking.tour.itinerary.forEach((stop, index) => {
+          doc.text(`Day ${index + 1}: ${stop.locationName}`, 20, nextY);
+          nextY += 6;
+        });
+      }
+      
+      // Bill Amount
+      nextY += 10;
+      doc.setFontSize(14);
+      doc.text('Payment Summary', 20, nextY);
+      doc.setFontSize(12);
+      doc.text(`Total Paid: INR ${booking.price}`, 20, nextY + 8);
+      doc.text(`Status: ${booking.status.toUpperCase()}`, 20, nextY + 14);
+
+      // Try adding image
+      if (booking.tour?.image) {
+        try {
+          const getBase64ImageFromUrl = async (imageUrl) => {
+            const res = await fetch(imageUrl);
+            const blob = await res.blob();
+            return new Promise((resolve, reject) => {
+              const reader =  new FileReader();
+              reader.addEventListener('load', () => resolve(reader.result));
+              reader.readAsDataURL(blob);
+            });
+          };
+          const base64 = await getBase64ImageFromUrl(booking.tour.image);
+          doc.addImage(base64, 'JPEG', 120, 55, 70, 70);
+        } catch (e) {
+          console.warn('Could not load image for PDF due to CORS or network', e);
+        }
+      }
+      
+      doc.save(`TripSphere_Bill_${booking._id}.pdf`);
+    } catch (error) {
+      console.error('PDF Generation failed', error);
+      alert('Failed to generate PDF');
+    }
+  };
 
   const deleteBookingHandler = async (id) => {
     if (window.confirm('Are you sure you want to delete this booking?')) {
@@ -148,11 +236,14 @@ const Dashboard = () => {
                           <p style={{ margin: 0, fontSize: '1.4rem', fontWeight: '700', color: '#d4af37' }}>₹{booking.price}</p>
                         </div>
                       </div>
-                      {user?.role === 'admin' && (
-                        <div style={{ marginTop: '1rem', borderTop: '1px solid #27272a', paddingTop: '1rem', textAlign: 'right' }}>
+                      <div style={{ marginTop: '1rem', borderTop: '1px solid #27272a', paddingTop: '1rem', display: 'flex', justifyContent: 'flex-end', gap: '1rem' }}>
+                        <button onClick={(e) => { e.stopPropagation(); generatePDF(booking); }} style={{ background: 'rgba(212, 175, 55, 0.1)', color: '#d4af37', border: '1px solid #d4af37', padding: '0.4rem 1rem', borderRadius: '4px', cursor: 'pointer', transition: 'background 0.2s', fontSize: '0.85rem' }} onMouseOver={e=>{e.currentTarget.style.background='rgba(212, 175, 55, 0.2)'}} onMouseOut={e=>{e.currentTarget.style.background='rgba(212, 175, 55, 0.1)'}}>
+                          Download Bill (PDF)
+                        </button>
+                        {user?.role === 'admin' && (
                           <button onClick={(e) => { e.stopPropagation(); deleteBookingHandler(booking._id); }} style={{ background: 'transparent', color: '#ef4444', border: '1px solid #ef4444', padding: '0.4rem 1rem', borderRadius: '4px', cursor: 'pointer', transition: 'background 0.2s', fontSize: '0.85rem' }} onMouseOver={e=>{e.currentTarget.style.background='rgba(239, 68, 68, 0.1)'}} onMouseOut={e=>{e.currentTarget.style.background='transparent'}}>Delete Booking</button>
-                        </div>
-                      )}
+                        )}
+                      </div>
                     </div>
                   </>
                 ) : (

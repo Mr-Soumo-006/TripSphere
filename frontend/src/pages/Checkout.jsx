@@ -15,6 +15,8 @@ const Checkout = () => {
   const [cardNumber, setCardNumber] = useState('');
   const [expiry, setExpiry] = useState('');
   const [cvc, setCvc] = useState('');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
 
   const userInfo = JSON.parse(localStorage.getItem('userInfo'));
 
@@ -28,6 +30,17 @@ const Checkout = () => {
       try {
         const { data } = await axios.get(`http://localhost:5000/api/tours/${id}`);
         setTour(data);
+        
+        const today = new Date();
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        const startStr = tomorrow.toISOString().split('T')[0];
+        setStartDate(startStr);
+        
+        const end = new Date(tomorrow);
+        end.setDate(end.getDate() + (data.duration || 1));
+        setEndDate(end.toISOString().split('T')[0]);
+        
         setLoading(false);
       } catch (err) {
         setError('Error loading checkout details');
@@ -59,7 +72,7 @@ const Checkout = () => {
         // Finalize booking
         const { data } = await axios.post(
           'http://localhost:5000/api/bookings',
-          { tourId: id },
+          { tourId: id, startDate, endDate },
           config
         );
 
@@ -174,6 +187,29 @@ const Checkout = () => {
            <div style={{ background: '#09090b', padding: '2rem', borderRadius: '4px', border: '1px solid #27272a', position: 'sticky', top: '100px' }}>
              <h3 style={{ fontSize: '1.2rem', color: '#fafafa', marginBottom: '1.5rem', fontWeight: '400', textTransform: 'uppercase', letterSpacing: '1px', borderBottom: '1px solid #27272a', paddingBottom: '1rem' }}>Order Summary</h3>
              
+             <div style={{ marginBottom: '1.5rem', paddingBottom: '1.5rem', borderBottom: '1px solid #27272a' }}>
+               <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '500', color: '#a1a1aa', textTransform: 'uppercase', marginBottom: '8px', letterSpacing: '1px' }}>Trip Start Date</label>
+               <input 
+                 type="date" 
+                 value={startDate}
+                 min={new Date().toISOString().split('T')[0]}
+                 onChange={e => {
+                   setStartDate(e.target.value);
+                   const start = new Date(e.target.value);
+                   const end = new Date(start);
+                   end.setDate(end.getDate() + (tour.duration || 1));
+                   setEndDate(end.toISOString().split('T')[0]);
+                 }}
+                 style={{ width: '100%', padding: '0.8rem', background: '#18181b', border: '1px solid #3f3f46', borderRadius: '4px', color: '#fafafa', fontSize: '1rem', outline: 'none', colorScheme: 'dark' }}
+                 required
+               />
+               {startDate && (
+                 <p style={{ margin: '0.8rem 0 0', color: '#a1a1aa', fontSize: '0.9rem' }}>
+                   Ends on: <span style={{ color: '#fafafa' }}>{new Date(endDate).toLocaleDateString()}</span>
+                 </p>
+               )}
+             </div>
+
              <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem' }}>
                <img src={tour.image} alt={tour.title} style={{ width: '100px', height: '100px', objectFit: 'cover', borderRadius: '2px' }} />
                <div>

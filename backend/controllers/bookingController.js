@@ -7,7 +7,7 @@ const sendEmail = require('../utils/sendEmail');
 // @access  Private
 const createBooking = async (req, res) => {
   try {
-    const { tourId } = req.body;
+    const { tourId, startDate, endDate } = req.body;
 
     const tour = await Tour.findById(tourId);
     if (!tour) {
@@ -18,6 +18,8 @@ const createBooking = async (req, res) => {
       user: req.user._id,
       tour: tour._id,
       price: tour.price,
+      startDate: startDate || new Date(),
+      endDate: endDate || new Date(new Date().setDate(new Date().getDate() + (tour.duration || 1))),
       status: 'confirmed' // Auto-confirming for now
     });
 
