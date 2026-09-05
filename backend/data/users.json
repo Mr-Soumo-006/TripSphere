@@ -1,0 +1,49 @@
+[
+  {
+    "_id": "6a8943e7879803096ebc8c1b",
+    "name": "Soumo Naskar",
+    "email": "naskarsoumo34@gmail.com",
+    "password": "$2b$10$zmrsWfssVVU78/49wv06wObZrQY.ITaGqcUpMC/F0CZ3EBXSWFisq",
+    "role": "admin",
+    "createdAt": "2026-08-22T06:38:31.172Z",
+    "updatedAt": "2026-08-26T11:27:08.258Z",
+    "__v": 4,
+    "avatar": "http://localhost:5000/uploads/image-1787741956833.jpeg",
+    "bio": "A passionate traveler.",
+    "wishlist": [
+      "6a89544632e7b51c6d044499"
+    ],
+    "resetPasswordExpires": "2026-08-23T13:25:01.528Z",
+    "resetPasswordOTP": "783329"
+  },
+  {
+    "_id": "6a8da704b5333ecbc4c6af0b",
+    "name": "Sayan Mitra ",
+    "email": "sayanmitra123@gmail.com",
+    "password": "$2b$10$CAlOWhdH.kkhudb53OUtVeGxAmo7.SlZE62f7nZ8zf5vS7yz5sNRq",
+    "role": "user",
+    "avatar": "https://ui-avatars.com/api/?name=User&background=d4af37&color=09090b",
+    "bio": "A passionate traveler.",
+    "wishlist": [],
+    "createdAt": "2026-08-25T14:30:28.684Z",
+    "updatedAt": "2026-08-25T14:30:28.684Z",
+    "__v": 0
+  },
+  {
+    "_id": "6a91bcfeed06d04674c427b3",
+    "name": "Updated Name",
+    "email": "tester_1787935998663@example.com",
+    "password": "$2b$10$bHnhCekSTBPM5UTlRnqQc.zeryR618EP.8AGw2tCLXixw.M3ENig6",
+    "role": "user",
+    "avatar": "https://ui-avatars.com/api/?name=User&background=d4af37&color=09090b",
+    "bio": "A passionate traveler.",
+    "wishlist": [
+      "6a89544632e7b51c6d044499"
+    ],
+    "createdAt": "2026-08-28T16:53:18.734Z",
+    "updatedAt": "2026-08-28T16:53:27.115Z",
+    "__v": 1,
+    "resetPasswordExpires": "2026-08-28T17:03:27.114Z",
+    "resetPasswordOTP": "530577"
+  }
+]
