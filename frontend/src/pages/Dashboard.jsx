@@ -176,22 +176,44 @@ const Dashboard = () => {
       if (booking.tour?.image) {
         try {
           const getBase64ImageFromUrl = async (imageUrl) => {
+            // Handle relative URLs or missing http
+            if (!imageUrl.startsWith('http')) {
+              if (!imageUrl.startsWith('/')) imageUrl = '/' + imageUrl;
+              if (!imageUrl.startsWith('/uploads')) imageUrl = '/uploads' + imageUrl;
+              imageUrl = 'http://localhost:5000' + imageUrl;
+            }
+            
             const res = await fetch(imageUrl);
             const blob = await res.blob();
+            
+            // Check if we actually got an image (Vite returns HTML for 404s)
+            if (!blob.type.startsWith('image/')) {
+              throw new Error('Not a valid image');
+            }
+            
             return new Promise((resolve, reject) => {
               const reader =  new FileReader();
-              reader.addEventListener('load', () => resolve(reader.result));
+              reader.addEventListener('load', () => resolve({
+                base64: reader.result,
+                format: blob.type.split('/')[1].toUpperCase() // e.g. JPEG, PNG, WEBP
+              }));
               reader.readAsDataURL(blob);
             });
           };
-          const base64 = await getBase64ImageFromUrl(booking.tour.image);
+          
+          const imageData = await getBase64ImageFromUrl(booking.tour.image);
+          
+          // Map formats for jsPDF compatibility
+          let imgFormat = imageData.format;
+          if (imgFormat === 'JPG') imgFormat = 'JPEG';
+          
           // Place image below itinerary
           const imageY = Math.max(currentY + 5, finalY + 10);
           if (imageY + 45 < 270) { // Check if it fits on page
-            doc.addImage(base64, 'JPEG', 14, imageY, 60, 40);
+            doc.addImage(imageData.base64, imgFormat, 14, imageY, 60, 40);
           }
         } catch (e) {
-          console.warn('Could not load image for PDF due to CORS or network', e);
+          console.warn('Could not load image for PDF:', e.message);
         }
       }
       
