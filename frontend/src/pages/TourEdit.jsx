@@ -168,11 +168,11 @@ const TourEdit = () => {
           setImage(matchedImage);
         } else {
           // Dynamic fallback for ANY city using LoremFlickr
-          setImage(`https://loremflickr.com/1000/600/${encodeURIComponent(primaryName)},travel,landscape/all`);
+          setImage(`https://image.pollinations.ai/prompt/${encodeURIComponent(primaryName)}%20travel%20landscape%20tourism?width=1000&height=600&nologo=true`);
         }
       } catch (err) {
         console.error('Error setting image', err);
-        setImage(`https://loremflickr.com/1000/600/${encodeURIComponent(primaryName)},travel,landscape/all`);
+        setImage(`https://image.pollinations.ai/prompt/${encodeURIComponent(primaryName)}%20travel%20landscape%20tourism?width=1000&height=600&nologo=true`);
       }
   };
 
